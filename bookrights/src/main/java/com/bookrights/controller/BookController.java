@@ -3,7 +3,7 @@ package com.bookrights.controller;
 import com.bookrights.repository.BookRepository;
 
 import com.bookrights.model.Book;
-
+import com.bookrights.model.CustomUserDetails;
 import com.bookrights.service.BookService;
 
 import com.bookrights.Dto.CreateBookRequest;
@@ -13,6 +13,10 @@ import com.bookrights.Dto.BookResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.validation.Valid;
 
 import java.util.Optional;
 
@@ -28,7 +32,7 @@ public class BookController {
     }
 
     @PostMapping("/api/createBook")
-    public ResponseEntity<?> createBook(@RequestBody CreateBookRequest request) {
+    public ResponseEntity<?> createBook(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody CreateBookRequest request) {
 
         Optional<Book> bookOptional = bookRepository.findByIsbn(request.getIsbn());
 
@@ -37,7 +41,7 @@ public class BookController {
 		}
 
         try {
-            BookResponse newBook = bookService.createBook(request, 0000);
+            BookResponse newBook = bookService.createBook(request, user);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(newBook);
 
@@ -56,15 +60,14 @@ public class BookController {
     }
 
     @PutMapping("/api/updateBook/{isbn}")
-	public ResponseEntity<?> updateBook(@RequestBody UpdateBookRequest request, @PathVariable("isbn") String isbn) {
+	public ResponseEntity<?> updateBook(@AuthenticationPrincipal CustomUserDetails user, @RequestBody UpdateBookRequest request, @PathVariable("isbn") String isbn) {
 		
 		if (isbn == null || isbn.isBlank()) {
 	        return ResponseEntity.badRequest().body("ISBN cannot be null or empty");
 	    }
 		
 		try {
-            BookResponse updatedBook = bookService.updateBook(isbn, request, 0000);
-
+            BookResponse updatedBook = bookService.updateBook(isbn, request, user);
             return ResponseEntity.ok(updatedBook);
 
         } catch (RuntimeException e) {
@@ -82,14 +85,15 @@ public class BookController {
 	}
 
     @DeleteMapping("/api/deleteBook/{isbn}")
-	public ResponseEntity<?> deleteBook(@PathVariable("isbn") String isbn) {		
+	public ResponseEntity<?> deleteBook(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("isbn") String isbn) {		
 		
 		if (isbn == null || isbn.isBlank()) {
 	        return ResponseEntity.badRequest().body("ISBN cannot be null or empty");
 	    }
 		
 		try {
-            return bookService.deleteBook(0000, isbn);
+            bookService.deleteBook(isbn, user);
+            return ResponseEntity.ok("Book removed successfully");
 
         } catch (RuntimeException e) {
 
@@ -103,6 +107,22 @@ public class BookController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
         }
+	}
+
+    @GetMapping("/api/books")
+	public ResponseEntity<Page<BookResponse>> getBooks(@AuthenticationPrincipal CustomUserDetails user, Pageable pageable) {
+
+	    Page<BookResponse> books = bookService.getBooks(pageable);
+	    
+	    return ResponseEntity.ok(books);
+	}
+
+    @GetMapping("/api/book/{isbn}")
+	public ResponseEntity<BookResponse> getBook(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("isbn") String isbn) {
+
+	    BookResponse book = bookService.getBook(isbn);
+	    
+	    return ResponseEntity.ok(book);
 	}
 
 }

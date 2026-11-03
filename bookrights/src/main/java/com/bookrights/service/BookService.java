@@ -5,16 +5,23 @@ import com.bookrights.repository.UserRepository;
 
 import com.bookrights.model.Book;
 import com.bookrights.model.User;
+import com.bookrights.model.CustomUserDetails;
 
 import com.bookrights.Dto.CreateBookRequest;
 import com.bookrights.Dto.UpdateBookRequest;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.NoSuchElementException;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 import com.bookrights.Dto.BookResponse;
 
-import org.springframework.stereotype.Service;
 
 @Service
 public class BookService {
@@ -27,15 +34,25 @@ public class BookService {
 		this.userRepository = userRepository;
     }
 
-    public Book getBook(String isbn) {
-    	Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new RuntimeException("Book not found"));
+    @Cacheable(value = "book", key = "#isbn")
+    public BookResponse getBook(String isbn) {
 
-		return book;
+    	Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
+		return new BookResponse(book);
+        
     }
+    
+    @Cacheable(value = "books")
+    public Page<BookResponse> getBooks(Pageable pageable) {
 
-    public BookResponse createBook(CreateBookRequest request, int userId) {
+        Page<Book> books = bookRepository.findAll(pageable);
+        return books.map(book -> new BookResponse(book));
+
+    }
+    
+    public BookResponse createBook(CreateBookRequest request, CustomUserDetails userDetails) {
     	
-    	User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    	User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
     	
         Book createBook = new Book(
             request .getAuthor(),
@@ -50,11 +67,12 @@ public class BookService {
         return new BookResponse(createBook);
     }
 
-    public BookResponse updateBook(String isbn, UpdateBookRequest request, int userId) {
+    @CacheEvict(value = "book", allEntries = true)
+    public BookResponse updateBook(String isbn, UpdateBookRequest request, CustomUserDetails userDetails) {
     	
-        Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new RuntimeException("Book not found"));
+        Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
         
-        User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
         
         verifyBookOwnership(book, user);
 
@@ -67,20 +85,19 @@ public class BookService {
         return new BookResponse(book);
     }
 
-    public ResponseEntity<String> deleteBook(int userId, String isbn) {
-		Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new RuntimeException("Book not found"));
+    @CacheEvict(value = "book", allEntries = true)
+    public void deleteBook(String isbn, CustomUserDetails userDetails) {
+		Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
 		
-		User user = userRepository.findByUserId(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
 
 		verifyBookOwnership(book, user);
 
 		bookRepository.delete(book);
-		
-		return ResponseEntity.ok("Book Removed");
 	}
 
     private void verifyBookOwnership(Book book, User user) {
-        if (!book.getUser().getUserId().equals(user.getUserId())) {
+        if (!book.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("You are not allowed to access this book");
         }
     }

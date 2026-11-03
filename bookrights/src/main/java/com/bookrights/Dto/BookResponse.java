@@ -1,8 +1,10 @@
 package com.bookrights.Dto;
 
+import java.io.Serializable;
+
 import com.bookrights.model.Book;
 
-public class BookResponse {
+public class BookResponse implements Serializable{
 
 	private String bookName;
     private String author;
