@@ -1,38 +1,42 @@
 package com.bookrights.service;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bookrights.Dto.RegisterRequest;
 import com.bookrights.Dto.LoginRequest;
 import com.bookrights.model.User;
 import com.bookrights.repository.UserRepository;
+import com.bookrights.repository.WalletRepository;
 import com.bookrights.security.JwtUtil;
 import com.bookrights.model.CustomUserDetails;
+import com.bookrights.model.Wallet;
 
 @Service
 public class AuthService {
 
 	private final UserRepository userRepository;
+	private final WalletRepository walletRepository;
 	private final JwtUtil jwtService;
 	private final AuthenticationManager authenticationManager;
 	private final PasswordEncoder passwordEncoder;
 
-	public AuthService(UserRepository userRepository, JwtUtil jwtService, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
+	public AuthService(UserRepository userRepository, WalletRepository walletRepository, JwtUtil jwtService, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
+		this.walletRepository = walletRepository;
 		this.jwtService = jwtService;
 		this.authenticationManager = authenticationManager;
 		this.passwordEncoder = passwordEncoder;
 		
 	}
 
+	@Transactional
 	public void register(RegisterRequest request) {
 
 		if (request == null) {
@@ -66,8 +70,9 @@ public class AuthService {
 		String hashedPassword = passwordEncoder.encode(request.getPassword());
 
 		User user = new User(request.getUsername(), request.getName(), request.getEmail(), hashedPassword);
-
+		Wallet wallet = new Wallet(user, 1000.0);
 		userRepository.save(user);
+		walletRepository.save(wallet);
 	}
 
     public String login(LoginRequest request) {
