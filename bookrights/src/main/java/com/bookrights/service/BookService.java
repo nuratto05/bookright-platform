@@ -3,6 +3,8 @@ package com.bookrights.service;
 import com.bookrights.repository.BookRepository;
 import com.bookrights.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 import com.bookrights.model.Book;
 import com.bookrights.model.User;
 import com.bookrights.model.CustomUserDetails;
@@ -34,10 +36,10 @@ public class BookService {
 		this.userRepository = userRepository;
     }
 
-    @Cacheable(value = "book", key = "#isbn")
-    public BookResponse getBook(String isbn) {
+    @Cacheable(value = "book", key = "#p0")
+    public BookResponse getBook(Long id) {
 
-    	Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
+    	Book book = bookRepository.findById(id).orElseThrow(() -> new NoSuchElementException ("Book not found"));
 		return new BookResponse(book);
         
     }
@@ -50,6 +52,7 @@ public class BookService {
 
     }
     
+    @Transactional 
     public BookResponse createBook(CreateBookRequest request, CustomUserDetails userDetails) {
     	
     	User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
@@ -68,9 +71,10 @@ public class BookService {
     }
 
     @CacheEvict(value = "book", allEntries = true)
-    public BookResponse updateBook(String isbn, UpdateBookRequest request, CustomUserDetails userDetails) {
+    @Transactional 
+    public BookResponse updateBook(Long id, UpdateBookRequest request, CustomUserDetails userDetails) {
     	
-        Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
+        Book book = bookRepository.findByIdWithLock(id).orElseThrow(() -> new NoSuchElementException ("Book not found"));
         
         User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
         
@@ -86,8 +90,9 @@ public class BookService {
     }
 
     @CacheEvict(value = "book", allEntries = true)
-    public void deleteBook(String isbn, CustomUserDetails userDetails) {
-		Book book = bookRepository.findByIsbn(isbn).orElseThrow(() -> new NoSuchElementException ("Book not found"));
+    @Transactional 
+    public void deleteBook(Long id, CustomUserDetails userDetails) {
+		Book book = bookRepository.findByIdWithLock(id).orElseThrow(() -> new NoSuchElementException ("Book not found"));
 		
 		User user = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException ("User not found"));
 

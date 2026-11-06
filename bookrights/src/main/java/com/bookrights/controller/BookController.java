@@ -55,19 +55,15 @@ public class BookController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred"  + e.getMessage());
         }
     }
 
-    @PutMapping("/api/updateBook/{isbn}")
-	public ResponseEntity<?> updateBook(@AuthenticationPrincipal CustomUserDetails user, @RequestBody UpdateBookRequest request, @PathVariable("isbn") String isbn) {
-		
-		if (isbn == null || isbn.isBlank()) {
-	        return ResponseEntity.badRequest().body("ISBN cannot be null or empty");
-	    }
+    @PutMapping("/api/updateBook/{id}")
+	public ResponseEntity<?> updateBook(@AuthenticationPrincipal CustomUserDetails user, @RequestBody UpdateBookRequest request, @PathVariable("id") Long id) {
 		
 		try {
-            BookResponse updatedBook = bookService.updateBook(isbn, request, user);
+            BookResponse updatedBook = bookService.updateBook(id, request, user);
             return ResponseEntity.ok(updatedBook);
 
         } catch (RuntimeException e) {
@@ -80,19 +76,15 @@ public class BookController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
 	}
 
-    @DeleteMapping("/api/deleteBook/{isbn}")
-	public ResponseEntity<?> deleteBook(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("isbn") String isbn) {		
-		
-		if (isbn == null || isbn.isBlank()) {
-	        return ResponseEntity.badRequest().body("ISBN cannot be null or empty");
-	    }
+    @DeleteMapping("/api/deleteBook/{id}")
+	public ResponseEntity<?> deleteBook(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("id") Long id) {		
 		
 		try {
-            bookService.deleteBook(isbn, user);
+            bookService.deleteBook(id, user);
             return ResponseEntity.ok("Book removed successfully");
 
         } catch (RuntimeException e) {
@@ -105,22 +97,22 @@ public class BookController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred"  + e.getMessage());
         }
 	}
 
     @GetMapping("/api/books")
-	public ResponseEntity<Page<BookResponse>> getBooks(@AuthenticationPrincipal CustomUserDetails user, Pageable pageable) {
+	public ResponseEntity<Page<BookResponse>> getBooks(Pageable pageable) {
 
 	    Page<BookResponse> books = bookService.getBooks(pageable);
 	    
 	    return ResponseEntity.ok(books);
 	}
 
-    @GetMapping("/api/book/{isbn}")
-	public ResponseEntity<BookResponse> getBook(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("isbn") String isbn) {
-
-	    BookResponse book = bookService.getBook(isbn);
+    @GetMapping("/api/books/{id}")
+	public ResponseEntity<BookResponse> getBook(@PathVariable("id") Long id) {
+        
+        BookResponse book = bookService.getBook(id);
 	    
 	    return ResponseEntity.ok(book);
 	}

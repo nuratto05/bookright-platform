@@ -32,6 +32,9 @@ public class Book {
 	
 	@Column(name="Category", nullable=false)
 	private String category;
+
+	@Column (name="Available", nullable=false)
+	private boolean available = true;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "User_Id")
@@ -94,6 +97,14 @@ public class Book {
 
 	public void setPrice(double price) {
 		this.price = price;
+	}
+
+	public boolean isAvailable() {
+		return available;
+	}
+
+	public void setAvailable(boolean available) {
+		this.available = available;
 	}
 
 	public User getUser() {
