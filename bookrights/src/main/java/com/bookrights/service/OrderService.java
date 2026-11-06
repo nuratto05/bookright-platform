@@ -39,7 +39,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CustomUserDetails userDetails, OrderRequest orderRequest) {
-        Book book = bookRepository.findById(orderRequest.getBookId()).orElseThrow(() -> new NoSuchElementException("Book not found"));
+        Book book = bookRepository.findByIdWithLock(orderRequest.getBookId()).orElseThrow(() -> new NoSuchElementException("Book not found"));
         
         User seller = userRepository.findById(book.getUser().getId()).orElseThrow(() -> new NoSuchElementException("Seller not found"));
         User buyer = userRepository.findById(userDetails.getUser().getId()).orElseThrow(() -> new NoSuchElementException("Buyer not found"));
@@ -72,7 +72,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse acceptOrder(CustomUserDetails userDetails, Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
+        Order order = orderRepository.findByIdWithLock(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
 
         if(order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Invalid Order Status");
@@ -82,7 +82,7 @@ public class OrderService {
             throw new RuntimeException("You are not authorized to accept this order");
         }
 
-        Book book = bookRepository.findById(order.getBook().getId()).orElseThrow(() -> new NoSuchElementException("Book not found"));
+        Book book = bookRepository.findByIdWithLock(order.getBook().getId()).orElseThrow(() -> new NoSuchElementException("Book not found"));
 
         if(!book.isAvailable()){
             throw new RuntimeException("Book is not available for purchase");
@@ -90,7 +90,7 @@ public class OrderService {
 
         book.setAvailable(false);
 
-        Wallet buyerWallet = walletRepository.findByUserId(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
+        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
         
         if(buyerWallet.getBalance() < order.getAmount()) {
             throw new RuntimeException("Insufficient funds");
@@ -107,7 +107,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse rejectOrder(CustomUserDetails userDetails, Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
+        Order order = orderRepository.findByIdWithLock(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
 
         if(order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Invalid Order Status");
