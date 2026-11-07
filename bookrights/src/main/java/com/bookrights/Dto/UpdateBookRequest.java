@@ -13,7 +13,6 @@ public class UpdateBookRequest {
 	}
     
 	public UpdateBookRequest(Optional<String> bookName, Optional<Double> price, Optional<String> category) {
-		super();
 		this.bookName = bookName;
 		this.price = price;
 		this.category = category;

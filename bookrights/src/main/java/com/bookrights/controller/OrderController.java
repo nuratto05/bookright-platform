@@ -7,6 +7,8 @@ import com.bookrights.Dto.OrderRequest;
 import com.bookrights.Dto.OrderResponse;
 import com.bookrights.service.OrderService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +32,7 @@ public class OrderController {
     }
 
     @PostMapping("/transaction/order/placeOrder")
-    public ResponseEntity<?> placeOrder(@AuthenticationPrincipal CustomUserDetails user, @RequestBody OrderRequest request) {
+    public ResponseEntity<?> placeOrder(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody OrderRequest request) {
 
         try{
             OrderResponse orderResponse = orderService.createOrder(user, request);

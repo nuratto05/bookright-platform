@@ -1,10 +1,10 @@
 package com.bookrights.Dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class OrderRequest {
 
-    @NotBlank(message = "Book ID cannot be empty")
+    @NotNull (message = "Book ID cannot be empty")
     private Long bookId;
 
     public OrderRequest() {

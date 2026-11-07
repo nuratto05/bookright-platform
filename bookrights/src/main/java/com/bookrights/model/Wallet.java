@@ -20,7 +20,10 @@ public class Wallet {
     @JoinColumn(name = "user_Id", nullable = false)
     private User user;
 
-    @Column (name = "Balance", nullable = false)
+    @Column (name = "pending_balance", nullable = false)
+    private double pending_balance;
+
+    @Column (name = "balance", nullable = false)
     private double balance;
 
     public Wallet() {
@@ -48,11 +51,28 @@ public class Wallet {
         this.user = user;
     }
 
+    public double getPending_balance() {
+        return pending_balance;
+    }
+
+    public void setPending_balance(double pending_balance) {
+        if(pending_balance < 0) {
+            throw new IllegalArgumentException("Pending balance cannot be negative");
+        }else if(pending_balance < getBalance()) {
+            throw new IllegalArgumentException("Balance too low");
+        }
+
+        this.pending_balance = pending_balance;
+    }
+
     public double getBalance() {
         return balance;
     }
 
     public void setBalance(double balance) {
+        if(pending_balance < 0) {
+            throw new IllegalArgumentException("Pending balance cannot be negative");
+        }
         this.balance = balance;
     }
     

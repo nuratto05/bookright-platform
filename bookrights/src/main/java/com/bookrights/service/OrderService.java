@@ -64,7 +64,7 @@ public class OrderService {
             throw new RuntimeException("Insufficient balance in buyer's wallet");
         }
 
-        Order order = new Order(buyer, seller, book, book.getPrice(), OrderStatus.PENDING, LocalDateTime.now(), LocalDateTime.now());
+        Order order = new Order(buyer, seller, book, book.getPrice(), OrderStatus.PENDING, LocalDateTime.now());
         orderRepository.save(order);
 
         return new OrderResponse(order);

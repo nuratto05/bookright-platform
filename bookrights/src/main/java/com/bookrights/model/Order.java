@@ -52,13 +52,13 @@ public class Order {
 
     }
 
-    public Order(User buyer, User seller, Book book, double amount, OrderStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Order(User buyer, User seller, Book book, double amount, OrderStatus status, LocalDateTime updatedAt) {
         this.buyer = buyer;
         this.seller = seller;
         this.book = book;
         this.amount = amount;
         this.status = status;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
         this.updatedAt = updatedAt;
     }
 
@@ -99,6 +99,9 @@ public class Order {
     }
 
     public void setAmount(double amount) {
+        if(amount < 0) {
+            throw new IllegalArgumentException("Amount cannot be negative");
+        }
         this.amount = amount;
     }
 
@@ -112,10 +115,6 @@ public class Order {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {

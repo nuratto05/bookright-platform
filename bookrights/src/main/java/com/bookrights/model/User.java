@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,16 +19,16 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name="Username", nullable=false,unique = true)
+	@Column(name="username", nullable=false,unique = true)
 	private String username;
 	
-	@Column(name="Password", nullable=false)
+	@Column(name="password", nullable=false)
 	private String password;
 
-	@Column(name="Name", nullable=false)
+	@Column(name="name", nullable=false)
 	private String name;
 
-	@Column(name="Email", nullable=false, unique = true)
+	@Column(name="email", nullable=false, unique = true)
 	private String email;
 
     @OneToMany(mappedBy = "user")

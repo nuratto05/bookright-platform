@@ -27,7 +27,6 @@ public class CreateBookRequest {
     }
 	
 	public CreateBookRequest(String bookName, String author, String isbn, String category, double price) {
-		super();
 		this.bookName = bookName;
 		this.author = author;
 		this.isbn = isbn;

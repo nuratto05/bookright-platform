@@ -1,8 +1,13 @@
 package com.bookrights.Dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class LoginRequest {
 	
+	@NotNull (message = "Username cannot be empty")
 	private String username;
+
+	@NotNull (message = "Password cannot be empty")
 	private String password;
 
 	public LoginRequest() {

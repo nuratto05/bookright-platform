@@ -18,26 +18,26 @@ public class Book {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name="Author", nullable=false)
+	@Column(name="author", nullable=false)
 	private String author;
 	
-	@Column(name="Book_Name", nullable=false)
+	@Column(name="book_name", nullable=false)
 	private String bookName;
 	
-	@Column(name="Isbn", unique=true, nullable=false)
+	@Column(name="isbn", unique=true, nullable=false)
 	private String isbn;
 	
-	@Column(name="Price")
+	@Column(name="price")
 	private double price;
 	
-	@Column(name="Category", nullable=false)
+	@Column(name="category", nullable=false)
 	private String category;
 
-	@Column (name="Available", nullable=false)
+	@Column (name="available", nullable=false)
 	private boolean available = true;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "User_Id")
+    @JoinColumn(name = "user_id")
 	private User user;
 	
 	public Book() {}
@@ -96,6 +96,9 @@ public class Book {
 	}
 
 	public void setPrice(double price) {
+		if(price < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
 		this.price = price;
 	}
 

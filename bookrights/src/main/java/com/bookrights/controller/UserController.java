@@ -15,21 +15,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.Cookie;
 
 @RestController 
 public class UserController {
     
     private final AuthService authService;
-	private final AuthenticationManager authenticationManager;
 
-	public UserController(AuthService authService, AuthenticationManager authenticationManager) {
+	public UserController(AuthService authService) {
 		this.authService = authService;
-		this.authenticationManager = authenticationManager;
 	}
 
     @GetMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
 
         try {
             String token = authService.login(request);
@@ -58,7 +57,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
 
 		try {
 
