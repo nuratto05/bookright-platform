@@ -48,7 +48,7 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
 
     }
@@ -91,7 +91,29 @@ public class OrderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
             }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
+        }
+
+    }
+
+    @PutMapping("/transaction/order/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("orderId") Long orderId) {
+
+        try{
+            OrderResponse orderResponse = orderService.cancelOrder(user, orderId);
+            return ResponseEntity.ok().body(orderResponse);
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage().equals("Order not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+
+            if (e.getMessage().equals("You are not authorized to cancel this order") || e.getMessage().equals("Invalid Order Status")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            }
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage() );
         }
 
     }
@@ -105,7 +127,7 @@ public class OrderController {
 
         } catch (RuntimeException e) {
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
     }
 
@@ -118,7 +140,7 @@ public class OrderController {
 
         } catch (RuntimeException e) {
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
     }
 

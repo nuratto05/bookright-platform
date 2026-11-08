@@ -96,6 +96,7 @@ public class OrderService {
             throw new RuntimeException("Insufficient funds");
         }
         
+        buyerWallet.setPending_balance(buyerWallet.getPending_balance() + order.getAmount());
         buyerWallet.setBalance(buyerWallet.getBalance() - order.getAmount());
 
         order.setStatus(OrderStatus.AWAITING_CONTRACT);
@@ -118,6 +119,30 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.REJECTED);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
+        return new OrderResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(CustomUserDetails userDetails, Long orderId) {
+        Order order = orderRepository.findByIdWithLock(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
+
+        if(order.getStatus() == OrderStatus.REJECTED || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Invalid Order Status");
+        }
+        
+        if(!order.getBuyer().getId().equals(userDetails.getUser().getId())) {
+            throw new RuntimeException("You are not authorized to cancel this order");
+        }
+
+        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
+
+        buyerWallet.setPending_balance(buyerWallet.getPending_balance() - order.getAmount());        
+        buyerWallet.setBalance(buyerWallet.getBalance() + order.getAmount());
+
+        order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(LocalDateTime.now());
 
         orderRepository.save(order);
