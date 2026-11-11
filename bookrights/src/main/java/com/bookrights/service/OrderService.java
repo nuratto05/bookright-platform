@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -52,17 +53,20 @@ public class OrderService {
             throw new RuntimeException("Book is not available for purchase");
         }
 
-        Optional<Order> existingOrder = orderRepository.findByBuyerIdAndBookId(buyer.getId(), book.getId());
+        Optional<Order> existingOrder = orderRepository.findByBuyerIdAndBookIdAndStatus(buyer.getId(), book.getId(), OrderStatus.PENDING);
 
         if(existingOrder.isPresent()) {
             return new OrderResponse(existingOrder.get());
         }
         
-        Wallet buyerWallet = walletRepository.findByUserId(buyer.getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
+        Wallet buyerWallet = walletRepository.findByUserIdWithLock(buyer.getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
 
         if(buyerWallet.getBalance() < book.getPrice()) {
             throw new RuntimeException("Insufficient balance in buyer's wallet");
         }
+
+        buyerWallet.setBalance(buyerWallet.getBalance() - book.getPrice());
+        buyerWallet.setPending_balance(buyerWallet.getPending_balance() + book.getPrice());
 
         Order order = new Order(buyer, seller, book, book.getPrice(), OrderStatus.PENDING, LocalDateTime.now());
         orderRepository.save(order);
@@ -88,19 +92,26 @@ public class OrderService {
             throw new RuntimeException("Book is not available for purchase");
         }
 
+        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
+        Wallet sellerWallet = walletRepository.findByUserIdWithLock(order.getSeller().getId()).orElseThrow(() -> new NoSuchElementException("Seller's wallet not found"));
+        
+        
+        buyerWallet.setPending_balance(buyerWallet.getPending_balance() - order.getAmount());
+        sellerWallet.setBalance(sellerWallet.getBalance() + order.getAmount());
+
         book.setAvailable(false);
 
-        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
-        
-        if(buyerWallet.getBalance() < order.getAmount()) {
-            throw new RuntimeException("Insufficient funds");
-        }
-        
-        buyerWallet.setPending_balance(buyerWallet.getPending_balance() + order.getAmount());
-        buyerWallet.setBalance(buyerWallet.getBalance() - order.getAmount());
-
-        order.setStatus(OrderStatus.AWAITING_CONTRACT);
+        order.setStatus(OrderStatus.COMPLETED);
         order.setUpdatedAt(LocalDateTime.now());
+
+        List<Order> orders = orderRepository.findByBookIdAndStatus(book.getId(), OrderStatus.PENDING);
+        for(Order otherOrders : orders){
+            if(!otherOrders.getId().equals(order.getId())){
+                refundBuyer(otherOrders);
+                otherOrders.setStatus(OrderStatus.REJECTED);
+                otherOrders.setUpdatedAt(LocalDateTime.now());
+            }
+        }
 
         orderRepository.save(order);
         return new OrderResponse(order);
@@ -111,12 +122,14 @@ public class OrderService {
         Order order = orderRepository.findByIdWithLock(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
 
         if(order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Invalid Order Status");
+            throw new IllegalStateException("Only pending orders can be rejected");
         }
         
         if(!order.getSeller().getId().equals(userDetails.getUser().getId())) {
             throw new RuntimeException("You are not authorized to reject this order");
         }
+
+        refundBuyer(order);
 
         order.setStatus(OrderStatus.REJECTED);
         order.setUpdatedAt(LocalDateTime.now());
@@ -129,18 +142,15 @@ public class OrderService {
     public OrderResponse cancelOrder(CustomUserDetails userDetails, Long orderId) {
         Order order = orderRepository.findByIdWithLock(orderId).orElseThrow(() -> new NoSuchElementException("Order not found"));
 
-        if(order.getStatus() == OrderStatus.REJECTED || order.getStatus() == OrderStatus.CANCELLED) {
-            throw new IllegalStateException("Invalid Order Status");
+        if(order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Only pending orders can be cancelled");
         }
         
         if(!order.getBuyer().getId().equals(userDetails.getUser().getId())) {
             throw new RuntimeException("You are not authorized to cancel this order");
         }
 
-        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
-
-        buyerWallet.setPending_balance(buyerWallet.getPending_balance() - order.getAmount());        
-        buyerWallet.setBalance(buyerWallet.getBalance() + order.getAmount());
+        refundBuyer(order);
 
         order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(LocalDateTime.now());
@@ -157,6 +167,12 @@ public class OrderService {
     public Page<OrderResponse> getMySales(CustomUserDetails userDetails, Pageable pageable) {
         Page<Order> orders = orderRepository.findBySellerId(userDetails.getUser().getId(), pageable);
         return orders.map(order -> new OrderResponse(order));
+    }
+
+    private void refundBuyer(Order order) {
+        Wallet buyerWallet = walletRepository.findByUserIdWithLock(order.getBuyer().getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
+        buyerWallet.setPending_balance(buyerWallet.getPending_balance() - order.getAmount());
+        buyerWallet.setBalance(buyerWallet.getBalance() + order.getAmount());
     }
     
 
