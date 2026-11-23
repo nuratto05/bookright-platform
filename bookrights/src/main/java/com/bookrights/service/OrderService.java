@@ -17,11 +17,16 @@ import com.bookrights.repository.OrderRepository;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.Cache;
+
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+
 
 @Service
 public class OrderService {
@@ -30,12 +35,14 @@ public class OrderService {
 	private UserRepository userRepository;
 	private WalletRepository walletRepository;
     private OrderRepository orderRepository;
+    private CacheManager cacheManager;
 
-    public OrderService(BookRepository bookRepository, UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository) {
+    public OrderService(BookRepository bookRepository, UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, CacheManager cacheManager) {
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.orderRepository = orderRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Transactional
@@ -100,6 +107,10 @@ public class OrderService {
         sellerWallet.setBalance(sellerWallet.getBalance() + order.getAmount());
 
         book.setAvailable(false);
+        Cache bookCache = cacheManager.getCache("book");
+        if(bookCache != null){
+            bookCache.evict(book.getId());
+        }
 
         order.setStatus(OrderStatus.COMPLETED);
         order.setUpdatedAt(LocalDateTime.now());

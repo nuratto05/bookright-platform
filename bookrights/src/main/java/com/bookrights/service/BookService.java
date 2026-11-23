@@ -36,7 +36,7 @@ public class BookService {
 		this.userRepository = userRepository;
     }
 
-    @Cacheable(value = "book", key = "#p0")
+    @Cacheable(value = "book", key = "#p0", sync = true)
     public BookResponse getBook(Long id) {
 
     	Book book = bookRepository.findById(id).orElseThrow(() -> new NoSuchElementException ("Book not found"));
@@ -44,7 +44,6 @@ public class BookService {
         
     }
     
-    @Cacheable(value = "books")
     public Page<BookResponse> getBooks(Pageable pageable) {
 
         Page<Book> books = bookRepository.findAll(pageable);
@@ -70,7 +69,7 @@ public class BookService {
         return new BookResponse(createBook);
     }
 
-    @CacheEvict(value = "book", allEntries = true)
+    @CacheEvict(value = "book", key = "#p0")
     @Transactional 
     public BookResponse updateBook(Long id, UpdateBookRequest request, CustomUserDetails userDetails) {
     	
@@ -89,7 +88,7 @@ public class BookService {
         return new BookResponse(book);
     }
 
-    @CacheEvict(value = "book", allEntries = true)
+    @CacheEvict(value = "book", key = "#p0")
     @Transactional 
     public void deleteBook(Long id, CustomUserDetails userDetails) {
 		Book book = bookRepository.findByIdWithLock(id).orElseThrow(() -> new NoSuchElementException ("Book not found"));
