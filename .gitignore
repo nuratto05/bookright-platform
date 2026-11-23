@@ -1,1 +1,7 @@
 /.metadata/
+
+/target/
+*.class
+*.lst
+*.txt
+*.xml
