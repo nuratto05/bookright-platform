@@ -58,8 +58,6 @@ public class Wallet {
     public void setPending_balance(double pending_balance) {
         if(pending_balance < 0) {
             throw new IllegalArgumentException("Pending balance cannot be negative");
-        }else if(pending_balance < getBalance()) {
-            throw new IllegalArgumentException("Balance too low");
         }
 
         this.pending_balance = pending_balance;
@@ -70,8 +68,8 @@ public class Wallet {
     }
 
     public void setBalance(double balance) {
-        if(pending_balance < 0) {
-            throw new IllegalArgumentException("Pending balance cannot be negative");
+        if(balance < 0) {
+            throw new IllegalArgumentException("Balance cannot be negative");
         }
         this.balance = balance;
     }

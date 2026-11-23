@@ -36,7 +36,7 @@ public class Book {
 	@Column (name="available", nullable=false)
 	private boolean available = true;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne
     @JoinColumn(name = "user_id")
 	private User user;
 	

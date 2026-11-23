@@ -38,7 +38,7 @@ public class OrderController {
             OrderResponse orderResponse = orderService.createOrder(user, request);
             return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             if (e.getMessage().equals("Book not found") || e.getMessage().equals("Seller not found") || e.getMessage().equals("Buyer not found") || e.getMessage().equals("Buyer's wallet not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -59,7 +59,7 @@ public class OrderController {
             OrderResponse orderResponse = orderService.acceptOrder(user, orderId);
             return ResponseEntity.ok().body(orderResponse);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             if (e.getMessage().equals("Order not found") || e.getMessage().equals("Buyer's wallet not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -81,7 +81,7 @@ public class OrderController {
             OrderResponse orderResponse = orderService.rejectOrder(user, orderId);
             return ResponseEntity.ok().body(orderResponse);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             if (e.getMessage().equals("Order not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -103,13 +103,13 @@ public class OrderController {
             OrderResponse orderResponse = orderService.cancelOrder(user, orderId);
             return ResponseEntity.ok().body(orderResponse);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             if (e.getMessage().equals("Order not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
 
-            if (e.getMessage().equals("You are not authorized to cancel this order") || e.getMessage().equals("Invalid Order Status")) {
+            if (e.getMessage().equals("You are not authorized to cancel this order") || e.getMessage().equals("Only pending orders can be cancelled") || e.getMessage().equals("Invalid Order Status")) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
             }
 
@@ -125,7 +125,7 @@ public class OrderController {
             Page<OrderResponse> orders = orderService.getMyPurchases(user, pageable);
             return ResponseEntity.ok().body(orders);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }
@@ -138,7 +138,7 @@ public class OrderController {
             Page<OrderResponse> orders = orderService.getMySales(user, pageable);
             return ResponseEntity.ok().body(orders);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred : " + e.getMessage());
         }

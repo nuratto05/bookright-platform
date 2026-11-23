@@ -62,7 +62,7 @@ public class OrderService {
         Wallet buyerWallet = walletRepository.findByUserIdWithLock(buyer.getId()).orElseThrow(() -> new NoSuchElementException("Buyer's wallet not found"));
 
         if(buyerWallet.getBalance() < book.getPrice()) {
-            throw new RuntimeException("Insufficient balance in buyer's wallet");
+            throw new IllegalArgumentException("Insufficient balance in buyer's wallet");
         }
 
         buyerWallet.setBalance(buyerWallet.getBalance() - book.getPrice());
